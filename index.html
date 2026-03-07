@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexiDraft Studio</title>
+    <meta
+      name="description"
+      content="Upload English vocabulary and generate a smooth article that uses every word."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="glow glow-a"></div>
+      <div class="glow glow-b"></div>
+
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Vocabulary Article Generator</p>
+          <h1>Turn a word list into an English article people can actually read.</h1>
+          <p class="hero-text">
+            Paste vocabulary, upload a file, call an OpenAI-compatible API, and
+            generate a clean article that highlights every target word in bold.
+          </p>
+          <div class="hero-metrics">
+            <article>
+              <span>Accepted Files</span>
+              <strong>.txt / .csv / .md / .json</strong>
+            </article>
+            <article>
+              <span>Export</span>
+              <strong>HTML Preview / Markdown</strong>
+            </article>
+            <article>
+              <span>Deploy</span>
+              <strong>GitHub Pages</strong>
+            </article>
+          </div>
+        </div>
+
+        <aside class="hero-aside">
+          <p class="aside-label">Workflow</p>
+          <ol>
+            <li>Import or paste your vocabulary list</li>
+            <li>Choose the topic, tone, and length</li>
+            <li>Generate the article and validate coverage</li>
+            <li>Push to GitHub and publish automatically</li>
+          </ol>
+          <p class="aside-note">
+            Your API key stays in browser storage only. It is not committed to
+            the repository.
+          </p>
+        </aside>
+      </header>
+
+      <main class="workspace">
+        <section class="panel control-panel">
+          <div class="section-title-wrap">
+            <p class="section-kicker">Step 1</p>
+            <h2>Generator Settings</h2>
+          </div>
+
+          <section class="card-stack">
+            <div class="card">
+              <div class="card-head">
+                <h3>API Setup</h3>
+                <span>Browser-to-API, no backend required</span>
+              </div>
+
+              <div class="field-grid">
+                <label class="field">
+                  <span>Base URL</span>
+                  <input
+                    id="api-base"
+                    type="url"
+                    spellcheck="false"
+                    placeholder="https://api.openai.com/v1"
+                  />
+                </label>
+
+                <label class="field">
+                  <span>Model</span>
+                  <input
+                    id="model"
+                    type="text"
+                    spellcheck="false"
+                    placeholder="gpt-4.1-mini"
+                  />
+                </label>
+
+                <label class="field field-full">
+                  <span>API Key</span>
+                  <input
+                    id="api-key"
+                    type="password"
+                    spellcheck="false"
+                    placeholder="sk-..."
+                    autocomplete="off"
+                  />
+                </label>
+              </div>
+
+              <p class="hint-text">
+                A static site cannot safely hide secrets, so the page expects
+                you to enter your own API key in the browser. The default
+                request format is `POST /chat/completions`.
+              </p>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <h3>Vocabulary Input</h3>
+                <span>Paste text, drag files, or upload word lists</span>
+              </div>
+
+              <label class="field">
+                <span>Word List</span>
+                <textarea
+                  id="vocabulary-input"
+                  rows="10"
+                  placeholder="Example:
+abandon
+brilliant
+take responsibility
+perspective"
+                ></textarea>
+              </label>
+
+              <div class="upload-row">
+                <label class="upload-box" for="vocabulary-file">
+                  <input
+                    id="vocabulary-file"
+                    type="file"
+                    multiple
+                    accept=".txt,.csv,.md,.json,text/plain,text/csv,application/json"
+                  />
+                  <strong>Upload Vocabulary Files</strong>
+                  <span>Drop files here or click to choose</span>
+                </label>
+
+                <div class="word-summary">
+                  <p id="word-count" class="summary-value">0 items</p>
+                  <p id="duplicate-count" class="summary-subtle">
+                    Final list is deduplicated automatically
+                  </p>
+                </div>
+              </div>
+
+              <div class="inline-actions">
+                <button id="sample-btn" class="ghost-btn" type="button">
+                  Load Sample
+                </button>
+                <button id="clear-btn" class="ghost-btn" type="button">
+                  Clear List
+                </button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <h3>Article Requirements</h3>
+                <span>Shape the draft into a readable learning piece</span>
+              </div>
+
+              <div class="field-grid">
+                <label class="field field-full">
+                  <span>Topic</span>
+                  <input
+                    id="topic"
+                    type="text"
+                    spellcheck="false"
+                    placeholder="campus life, workplace growth, travel diary"
+                  />
+                </label>
+
+                <label class="field">
+                  <span>Audience</span>
+                  <input
+                    id="audience"
+                    type="text"
+                    spellcheck="false"
+                    placeholder="middle school learners"
+                  />
+                </label>
+
+                <label class="field">
+                  <span>Tone</span>
+                  <select id="tone">
+                    <option value="clear and encouraging">Clear and encouraging</option>
+                    <option value="warm and vivid">Warm and vivid</option>
+                    <option value="calm and thoughtful">Calm and thoughtful</option>
+                    <option value="practical and professional">Practical and professional</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Length</span>
+                  <select id="length">
+                    <option value="short">Short (320-450 words)</option>
+                    <option value="medium" selected>Medium (500-700 words)</option>
+                    <option value="long">Long (750-950 words)</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Paragraphs</span>
+                  <select id="paragraph-count">
+                    <option value="4">4 paragraphs</option>
+                    <option value="5" selected>5 paragraphs</option>
+                    <option value="6">6 paragraphs</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="card action-card">
+              <button id="generate-btn" class="primary-btn" type="button">
+                Generate Article
+              </button>
+              <p id="status-text" class="status-text">
+                Add vocabulary first, then click Generate Article.
+              </p>
+            </div>
+          </section>
+        </section>
+
+        <section class="panel preview-panel">
+          <div class="section-title-wrap">
+            <p class="section-kicker">Step 2</p>
+            <h2>Article Preview</h2>
+          </div>
+
+          <div class="preview-toolbar">
+            <div class="coverage-box">
+              <span class="coverage-label">Coverage</span>
+              <strong id="coverage-value">0 / 0</strong>
+              <p id="coverage-note">Coverage is checked after generation.</p>
+            </div>
+
+            <div class="toolbar-actions">
+              <button id="copy-html-btn" class="ghost-btn" type="button" disabled>
+                Copy HTML
+              </button>
+              <button id="copy-md-btn" class="ghost-btn" type="button" disabled>
+                Copy Markdown
+              </button>
+              <button id="download-html-btn" class="ghost-btn" type="button" disabled>
+                Download HTML
+              </button>
+              <button id="download-md-btn" class="ghost-btn" type="button" disabled>
+                Download Markdown
+              </button>
+            </div>
+          </div>
+
+          <div class="missing-panel">
+            <div class="missing-head">
+              <h3>Missing Vocabulary</h3>
+              <span id="missing-count">0 items</span>
+            </div>
+            <div id="missing-list" class="chip-list">
+              <span class="empty-chip">Nothing to show yet</span>
+            </div>
+          </div>
+
+          <article id="article-preview" class="article-preview">
+            <div class="empty-state">
+              <p class="empty-kicker">Ready</p>
+              <h3>Your generated article will appear here</h3>
+              <p>
+                Target vocabulary is highlighted in bold. If the model misses
+                some items, the app retries and shows the remaining gaps.
+              </p>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
