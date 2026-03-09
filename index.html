@@ -561,7 +561,7 @@
 
             body += `\n\n${pick(stylePack.closers, words.length + paragraphCount)}, these words are no longer isolated items on a list; they now function as part of a complete expression system.`;
 
-            return `# ${title}\n\n## 词汇清单（释义）\n${vocabList}\n\n## 例句\n${exampleList}\n\n## 小短文\n${body}`;
+            return `# ${title}\n\n${body}`;
         }
 
         function chunkArray(array, size) {
