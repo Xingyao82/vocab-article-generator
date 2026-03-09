@@ -183,6 +183,15 @@
                             placeholder="例如：科技、环保、日常生活..."
                         >
                     </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">文风</label>
+                        <select id="style" class="w-full p-2 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none">
+                            <option value="narrative" selected>高级叙事风（推荐）</option>
+                            <option value="academic">考试议论文风</option>
+                            <option value="magazine">科技杂志风</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Generate Button -->
@@ -360,6 +369,7 @@
             const length = document.getElementById('length').value;
             const difficulty = document.getElementById('difficulty').value;
             const topic = document.getElementById('topic').value;
+            const style = document.getElementById('style').value;
 
             // Show loading
             document.getElementById('empty-state').classList.add('hidden');
@@ -371,7 +381,7 @@
                 if (mode === 'openai') {
                     article = await generateWithOpenAI(currentWords, length, difficulty, topic);
                 } else {
-                    article = generateWithTemplate(currentWords, length, difficulty, topic);
+                    article = generateWithTemplate(currentWords, length, difficulty, topic, style);
                 }
                 displayArticle(article, mode);
             } catch (error) {
@@ -465,51 +475,93 @@
             return { pos: 'word', meaning: '建议结合上下文记忆' };
         }
 
-        function sentenceByDifficulty(difficulty, word, topicText) {
-            const simple = `I use **${word}** in my daily study.`;
-            const medium = `When I talk about ${topicText}, I try to use **${word}** correctly in context.`;
-            const hard = `To discuss ${topicText} more precisely, I intentionally apply **${word}** in both writing and speaking.`;
-
-            if (difficulty === 'elementary') return simple;
-            if (difficulty === 'middle') return medium;
-            return hard;
+        function getStylePack(style) {
+            const packs = {
+                narrative: {
+                    titleSuffix: 'A Personal Learning Journey',
+                    openers: ['At first glance', 'From my recent practice', 'During this week\'s study', 'At the beginning of this learning cycle'],
+                    transitions: ['Meanwhile', 'More importantly', 'As a result', 'In addition'],
+                    closers: ['By the end of the day', 'Looking back now', 'In the long run']
+                },
+                academic: {
+                    titleSuffix: 'An Analytical Reflection',
+                    openers: ['In language learning', 'From an educational perspective', 'In practical communication contexts', 'In academic writing practice'],
+                    transitions: ['Furthermore', 'Nevertheless', 'Consequently', 'Moreover'],
+                    closers: ['In conclusion', 'To sum up', 'Overall']
+                },
+                magazine: {
+                    titleSuffix: 'A Modern Use Case',
+                    openers: ['In today\'s fast-changing world', 'Across modern workplaces', 'In the age of technology', 'As communication becomes global'],
+                    transitions: ['At the same time', 'On top of that', 'For this reason', 'Notably'],
+                    closers: ['Going forward', 'That is why', 'This trend shows']
+                }
+            };
+            return packs[style] || packs.narrative;
         }
 
-        function generateWithTemplate(words, length, difficulty, topic) {
-            const lengthMap = { short: 3, medium: 5, long: 7 };
-            const paragraphCount = lengthMap[length] || 5;
-            const topicText = topic || 'learning English';
-            const title = topic ? `${topic} Vocabulary Practice` : 'Vocabulary Growth Journal';
+        function pick(arr, seed = 0) {
+            if (!arr.length) return '';
+            return arr[seed % arr.length];
+        }
+
+        function smoothJoin(items) {
+            if (items.length <= 1) return items[0] || '';
+            if (items.length === 2) return `${items[0]} and ${items[1]}`;
+            return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+        }
+
+        function sentenceByDifficulty(difficulty, word, topicText, style) {
+            const advancedMap = {
+                narrative: `I deliberately placed **${word}** into a real-life scene related to ${topicText}, which made the expression feel natural rather than forced.`,
+                academic: `In a discussion on ${topicText}, **${word}** serves as a precise lexical choice that improves both clarity and logic.`,
+                magazine: `When talking about ${topicText}, **${word}** adds a sharper tone that sounds closer to authentic media English.`
+            };
+
+            if (difficulty === 'elementary') {
+                return `I used **${word}** in a simple sentence about ${topicText}.`;
+            }
+            if (difficulty === 'middle') {
+                return `When discussing ${topicText}, I tried to use **${word}** correctly in context.`;
+            }
+            return advancedMap[style] || advancedMap.narrative;
+        }
+
+        function generateWithTemplate(words, length, difficulty, topic, style = 'narrative') {
+            const paraMap = { short: 2, medium: 3, long: 4 };
+            const paragraphCount = paraMap[length] || 3;
+            const topicText = topic?.trim() || 'learning English';
+            const stylePack = getStylePack(style);
+            const title = topicText === 'learning English'
+                ? `Vocabulary Practice: ${stylePack.titleSuffix}`
+                : `${topicText}: ${stylePack.titleSuffix}`;
 
             const vocabList = words.map((word, i) => {
                 const info = getWordInfo(word);
                 return `${i + 1}. **${word}** (${info.pos})：${info.meaning}`;
             }).join('\n');
 
-            const exampleList = words.map((word, i) => {
-                const sentence = sentenceByDifficulty(difficulty, word, topicText);
-                return `${i + 1}. ${sentence}`;
-            }).join('\n');
-
-            let story = `# ${title}\n\n`;
-            story += `## 词汇清单（释义）\n${vocabList}\n\n`;
-            story += `## 例句\n${exampleList}\n\n`;
-            story += `## 小短文\n`;
-            story += `Today I focused on ${topicText}. `;
+            const exampleList = words.map((word, i) => `${i + 1}. ${sentenceByDifficulty(difficulty, word, topicText, style)}`).join('\n');
 
             const groups = chunkArray(words, Math.max(1, Math.ceil(words.length / paragraphCount)));
+
+            let body = `${pick(stylePack.openers, words.length)}, I focused on ${topicText} and tried to activate my vocabulary in authentic contexts.`;
+
             groups.forEach((group, idx) => {
                 if (!group.length) return;
-                const merged = group.map(w => `**${w}**`).join(', ');
-                story += `\n\nParagraph ${idx + 1}: `;
-                story += `I reviewed ${merged} and connected them to real situations. `;
-                story += sentenceByDifficulty(difficulty, group[0], topicText) + ' ';
-                if (group[1]) story += sentenceByDifficulty(difficulty, group[1], topicText) + ' ';
-                story += `This helped me remember the words naturally instead of memorizing them mechanically.`;
+                const highlighted = group.map((w) => `**${w}**`);
+                const bridge = pick(stylePack.transitions, idx + group.length);
+
+                body += `\n\n${bridge}, I integrated ${smoothJoin(highlighted)} into one coherent idea.`;
+                group.forEach((word, innerIdx) => {
+                    if (innerIdx > 1) return;
+                    body += ` ${sentenceByDifficulty(difficulty, word, topicText, style)}`;
+                });
+                body += ` This paragraph-level connection improved fluency and made the wording sound less mechanical.`;
             });
 
-            story += `\n\nIn conclusion, these words are now part of my active vocabulary, and I will reuse them in future writing.`;
-            return story;
+            body += `\n\n${pick(stylePack.closers, words.length + paragraphCount)}, these words are no longer isolated items on a list; they now function as part of a complete expression system.`;
+
+            return `# ${title}\n\n## 词汇清单（释义）\n${vocabList}\n\n## 例句\n${exampleList}\n\n## 小短文\n${body}`;
         }
 
         function chunkArray(array, size) {
